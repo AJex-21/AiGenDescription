@@ -1,13 +1,12 @@
 import json
+import re
 import requests
-from bs4 import BeautifulSoup
-from collections import defaultdict
 
 
 def get_specs(url: str) -> str:
     """
-    Scrape product specifications from an Elgiganten product page.
-    Returns a JSON string. Returns '{}' if no specs found.
+    Extracts product data from Kjell's embedded CURRENT_PAGE JSON.
+    Returns a JSON string with description, specs, usps, tags, and subtitle.
     Raises requests.HTTPError on bad HTTP responses.
     """
     headers = {
@@ -21,39 +20,44 @@ def get_specs(url: str) -> str:
     response = requests.get(url, headers=headers, timeout=15)
     response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, "html.parser")
-    spec_div = soup.find("div", id="specifications")
+    match = re.search(
+        r"window\.CURRENT_PAGE\s*=\s*(\{.*?\});\s*\n",
+        response.text,
+        re.DOTALL
+    )
 
-    if not spec_div:
+    if not match:
         return "{}"
 
-    specs = defaultdict(dict)
+    page_data = json.loads(match.group(1))
 
-    for group in spec_div.select("div.mb-3"):
-        heading = group.find("h3")
-        if not heading:
-            continue
+    def extract_text_from_html_nodes(nodes) -> str:
+        """Recursively pull text out of Kjell's HTML node format."""
+        if isinstance(nodes, str):
+            return nodes
+        if isinstance(nodes, list):
+            return " ".join(extract_text_from_html_nodes(n) for n in nodes)
+        if isinstance(nodes, dict):
+            children = nodes.get("children", [])
+            return extract_text_from_html_nodes(children)
+        return ""
 
-        title_span = heading.find("span")
-        group_title = title_span.get_text(strip=True) if title_span else None
-        if not group_title:
-            continue
+    raw_description = page_data.get("htmlDescription", {}).get("html", [])
+    raw_specs = page_data.get("longHtmlDescription", {}).get("html", [])
 
-        for dl in group.find_all("dl"):
-            dt = dl.find("dt")
-            dd = dl.find("dd")
-            if not dt or not dd:
-                continue
+    result = {
+        "title": page_data.get("displayName"),
+        "subtitle": page_data.get("subtitle"),
+        "brand": page_data.get("brandName"),
+        "description": extract_text_from_html_nodes(raw_description).strip(),
+        "specs_text": extract_text_from_html_nodes(raw_specs).strip(),
+        "usps": page_data.get("usps", []),
+        "tags": [t["name"] for t in page_data.get("tags", [])],
+    }
 
-            name = dt.get_text(" ", strip=True)
-            value = dd.get_text(" ", strip=True)
-
-            if name and value:
-                specs[group_title][name] = value
-
-    return json.dumps(dict(specs), ensure_ascii=False, indent=2)
+    return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":
-    url = "https://www.elgiganten.se/product/vitvaror/tvatt-tork/tvattmaskin/electrolux-serie-600-tvattmaskin-efi622ex4e105kg/966285"
+    url = "https://www.kjell.com/se/produkter/mobilt/mobilladdare/usb-laddare/linocell-gan-multiladdare-33-w-pd-vit-p22191"
     print(get_specs(url))

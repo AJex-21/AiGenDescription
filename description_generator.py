@@ -14,42 +14,42 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 def generate_description(specs_json: str) -> str:
-    """
-    Takes a JSON string of product specs and returns a Swedish marketing description.
-    Returns an error message string if something goes wrong.
-    """
     try:
-        specs = json.loads(specs_json)
+        data = json.loads(specs_json)
     except json.JSONDecodeError as e:
         return f"Error: Could not parse specs JSON - {e}"
 
-    if not specs:
+    if not data:
         return "Error: Specs are empty, nothing to generate from"
 
-    client = Groq(api_key=os.getenv("Groq_API_Key"))
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     prompt = f"""
-    Produktspecifikationer:
-    {json.dumps(specs, ensure_ascii=False, indent=2)}
+    Du är copywriter för Kjell & Company och skriver för deras egna varumärke Linocell.
 
-    Skriv en overrygande produktbeskrivning for Elgiganten.se pa svenska.
+    Produkt: {data.get("title", "")}
+    Underrubrik (befintlig): {data.get("subtitle", "")}
+    Befintlig beskrivning: {data.get("description", "")}
+    Tekniska specifikationer: {data.get("specs_text", "")}
+    Säljpunkter: {", ".join(data.get("usps", []))}
+    Taggar: {", ".join(data.get("tags", []))}
+
+    Skriv en ny, förbättrad produktbeskrivning på svenska.
 
     Regler:
     - Max 120 ord
     - 4-6 meningar, max 18 ord per mening
-    - Ton: Professionell men varm, familjevanlig
-    - Namna 2-3 nyckelfunktioner (t.ex. energiklass, kapacitet, program)
-    - Fokusera pa fordelar, inte bara siffror (t.ex. energiklass A = lagre elrakning)
-    - Avsluta med: "Uppfack [produkt] hos Elgiganten idag!"
-
-    Svara endast med produktbeskrivningen, ingen extra text.
+    - Matcha Kjells ton: kunnig, varm, tydlig - inte reklamig
+    - Nämn 2-3 konkreta fördelar från specifikationerna
+    - Avsluta INTE med en CTA, Kjell gör inte det
+    - Svara endast med beskrivningen, ingen extra text
     """
 
     try:
         completion = client.chat.completions.create(
-            model=GROQ_MODEL,
+            model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "Du ar Elgigantens copywriter. Du skriver korta, overrygande produktbeskrivningar pa svenska."},
+                {"role": "system", "content": "Du är Kjell & Companys copywriter. Du skriver korta, trovärdiga produktbeskrivningar på svenska som låter mänskliga och kunniga."},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.3,
