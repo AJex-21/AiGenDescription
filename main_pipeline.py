@@ -1,55 +1,54 @@
 import json
-from website import scrape_elgiganten_specs_json  # Your scraper file
-from description_generator import generate_description_from_json  # Your AI file
+import logging
+from website import get_specs
+from description_generator import generate_description
 
-def full_pipeline(url: str) -> str:
-    """
-    COMPLETE PIPELINE: URL → JSON specs → AI description
-    """
-    print(f"🔄 Scraping specs from: {url}")
-    
-    # Step 1: Scrape → JSON
-    specs_json = scrape_elgiganten_specs_json(url)
-    
-    if not specs_json or specs_json == '{}':
-        return "❌ No specifications found on this page"
-    
-    print("✅ Specs extracted successfully!")
-    print("📊 Sample:", json.dumps(json.loads(specs_json), indent=2, ensure_ascii=False)[:500] + "...")
-    
-    # Step 2: JSON → AI Description
-    print("🤖 Generating description...")
-    description = generate_description_from_json(specs_json)
-    
-    return description
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-# BATCH PROCESSING
-def batch_process(urls: list) -> dict:
-    """Process multiple products"""
+
+def run_pipeline(url: str) -> str:
+    """
+    Full pipeline: URL -> scraped specs JSON -> AI-generated description.
+    Returns a description string, or an error message string.
+    """
+    logger.info(f"Scraping: {url}")
+
+    try:
+        specs_json = get_specs(url)
+    except Exception as e:
+        return f"Error: Failed to scrape page - {e}"
+
+    if specs_json == "{}" or not specs_json:
+        return "Error: No specifications found on this page"
+
+    logger.info("Specs scraped. Generating description...")
+    return generate_description(specs_json)
+
+
+def batch_pipeline(urls: list) -> dict:
+    """
+    Process multiple product URLs.
+    Returns a dict mapping URL -> description (or error message).
+    """
     results = {}
     for i, url in enumerate(urls, 1):
-        print(f"\n{'='*70}")
-        print(f"Processing product {i}/{len(urls)}")
-        results[url] = full_pipeline(url)
+        logger.info(f"Processing {i}/{len(urls)}: {url}")
+        results[url] = run_pipeline(url)
     return results
 
+
 if __name__ == "__main__":
-    # Single product
-    single_url = "https://www.elgiganten.se/product/vitvaror/tvatt-tork/tvattmaskin/electrolux-serie-600-tvattmaskin-efi622ex4e105kg/966285"
-    
-    print("🚀 SINGLE PRODUCT PIPELINE")
-    result = full_pipeline(single_url)
-    print(result)
-    
-    # Batch example
-    print("\n\n🚀 BATCH PIPELINE")
-    urls = [
-        "https://www.elgiganten.se/product/vitvaror/tvatt-tork/tvattmaskin/electrolux-serie-600-tvattmaskin-efi622ex4e105kg/966285",
-        # Add more URLs here
-    ]
-    batch_results = batch_process(urls)
-    
-    # Save batch results
+    url = "https://www.elgiganten.se/product/vitvaror/tvatt-tork/tvattmaskin/electrolux-serie-600-tvattmaskin-efi622ex4e105kg/966285"
+
+    print("--- SINGLE PRODUCT ---")
+    print(run_pipeline(url))
+
+    print("\n--- BATCH ---")
+    urls = [url]
+    results = batch_pipeline(urls)
+
     with open("batch_descriptions.json", "w", encoding="utf-8") as f:
-        json.dump(batch_results, f, ensure_ascii=False, indent=2)
-    print("\n💾 Batch results saved to 'batch_descriptions.json'")
+        json.dump(results, f, ensure_ascii=False, indent=2)
+
+    logger.info("Batch results saved to batch_descriptions.json")
