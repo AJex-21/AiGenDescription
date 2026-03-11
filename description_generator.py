@@ -22,7 +22,7 @@ def generate_description(specs_json: str) -> str:
     if not data:
         return "Error: Specs are empty, nothing to generate from"
 
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    client = Groq(api_key=os.getenv("Groq_API_Key"))
 
     prompt = f"""
     Du är copywriter för Kjell & Company och skriver för deras egna varumärke Linocell.

@@ -39,8 +39,8 @@ def batch_pipeline(urls: list) -> dict:
 
 
 if __name__ == "__main__":
-    url = "https://www.elgiganten.se/product/vitvaror/tvatt-tork/tvattmaskin/electrolux-serie-600-tvattmaskin-efi622ex4e105kg/966285"
-
+    url = "https://www.kjell.com/se/produkter/natverk/tradlosa-routrar/wifi-7-routers/mercusys-mr47be-tri-band-wifi-7-router-p66178"
+    
     print("--- SINGLE PRODUCT ---")
     print(run_pipeline(url))
 
