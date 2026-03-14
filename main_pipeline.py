@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from website import scrape_kjell_specs_json
+from KC_scrape import scrape_kjell_specs_json
 from description_generator import generate_description_from_json
 
 

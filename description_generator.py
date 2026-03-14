@@ -159,7 +159,7 @@ def generate_description_from_json(specs_json: str) -> str:
 
 def generate_description_from_url(url: str) -> str:
     """Scrape a kjell.com URL, then generate a description."""
-    from website import scrape_kjell_specs_json
+    from KC_scrape import scrape_kjell_specs_json
     specs_json = scrape_kjell_specs_json(url)
     return DescriptionGenerator().generate(specs_json, url)
 
