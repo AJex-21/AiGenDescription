@@ -3,3 +3,5 @@ __pycache__/
 venv/
 batch_descriptions.json
 *.pyc
+testURLs.txt
+compare.py

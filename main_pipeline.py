@@ -1,11 +1,9 @@
 """
 main_pipeline.py
-Full pipeline: kjell.com URL -> JSON specs -> AI description
+Run on a single kjell.com URL, save result to batch_descriptions.json.
 
 Usage:
-    python main_pipeline.py                     # demo with two hardcoded URLs
-    python main_pipeline.py <url>               # single URL
-    python main_pipeline.py --batch urls.txt    # one URL per line in a text file
+    python main_pipeline.py <url>
 """
 
 import json
@@ -15,102 +13,65 @@ from pathlib import Path
 from KC_scrape import scrape_kjell_specs_json
 from description_generator import generate_description_from_json, format_output
 
+OUTPUT_FILE = "batch_descriptions.json"
 
-# ── Single product ─────────────────────────────────────────────────────────────
 
-def full_pipeline(url: str, verbose: bool = True) -> dict:
-    """
-    URL -> scraped JSON -> AI description.
-    Returns a dict with product metadata plus generated subtitle, bullets and description.
-    """
-    if verbose:
-        print(f"\n{'='*70}")
-        print(f"Scraping: {url}")
+def run(url: str) -> None:
+    print(f"\nScraping: {url}")
 
     specs_json = scrape_kjell_specs_json(url)
 
     if not specs_json or specs_json == "{}":
-        return {"error": "Inga produktdata hittades pa sidan", "url": url}
+        print("Inga produktdata hittades pa sidan.")
+        return
 
     data = json.loads(specs_json)
-
-    if verbose:
-        print(f"  Produkt  : {data.get('product_name', '-')}")
-        print(f"  Varumarke: {data.get('brand', '-')}")
-        print(f"  Pris     : {data.get('price_current', '-')} kr "
-              f"(orig. {data.get('price_original', '-')} kr)")
-        print(f"\n  Genererar beskrivning...")
+    print(f"  Produkt  : {data.get('product_name', '-')}")
+    print(f"  Varumarke: {data.get('brand', '-')}")
+    print(f"  Pris     : {data.get('price_current', '-')} kr")
+    print("\n  Genererar beskrivning...")
 
     generated = generate_description_from_json(specs_json)
+    print(format_output(generated, url))
 
-    if verbose:
-        print(format_output(generated, url))
-
-    return {
-        "product_name":         data.get("product_name", ""),
-        "brand":                data.get("brand", ""),
-        "article_number":       data.get("article_number", ""),
-        "category_path":        data.get("category_path", ""),
-        "price_current":        data.get("price_current"),
-        "price_original":       data.get("price_original"),
-        "price_discount_pct":   data.get("price_discount_pct"),
-        "original_usps":        data.get("usps", []),
-        "original_description": data.get("short_description", ""),
-        "generated_subtitle":   generated.get("subtitle", ""),
-        "generated_bullets":    generated.get("bullets", []),
+    result = {
+        "product_name":          data.get("product_name", ""),
+        "brand":                 data.get("brand", ""),
+        "article_number":        data.get("article_number", ""),
+        "category_path":         data.get("category_path", ""),
+        "price_current":         data.get("price_current"),
+        "price_original":        data.get("price_original"),
+        "price_discount_pct":    data.get("price_discount_pct"),
+        "original_usps":         data.get("usps", []),
+        "original_description":  data.get("short_description", ""),
+        "generated_subtitle":    generated.get("subtitle", ""),
+        "generated_bullets":     generated.get("bullets", []),
         "generated_description": generated.get("description", ""),
-        "url":                  url,
+        "url":                   url,
     }
 
-
-# ── Batch processing ───────────────────────────────────────────────────────────
-
-def batch_process(urls: list, output_file: str = "batch_descriptions.json") -> dict:
-    """
-    Process multiple kjell.com product URLs.
-    Saves full structured results to output_file.
-    """
-    results = {}
-    total = len(urls)
-
-    for i, url in enumerate(urls, 1):
-        print(f"\n[{i}/{total}]")
+    # Load existing data if file exists, then append
+    out_path = Path(OUTPUT_FILE)
+    existing = {}
+    if out_path.exists():
         try:
-            result = full_pipeline(url, verbose=True)
-        except Exception as exc:
-            result = {"error": str(exc), "url": url}
-        results[url] = result
+            existing = json.loads(out_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing = {}
 
-    out_path = Path(output_file)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+    existing[url] = result
 
-    print(f"\nResultat sparade i '{out_path}'")
-    return results
+    out_path.write_text(
+        json.dumps(existing, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
 
-
-# ── Entry point ────────────────────────────────────────────────────────────────
-
-DEMO_URLS = [
-    "https://www.kjell.com/se/produkter/ljud-bild/horlurar-headset/brusreducerande-horlurar/aiwa-arc-1-anc-tradlosa-horlurar-p66465",
-    "https://www.kjell.com/se/produkter/ljud-bild/horlurar-headset/tradlosa-bluetooth-horlurar/linocell-tws-earphones-tradlosa-horlurar-p24224",
-]
+    print(f"\nSparat i '{OUTPUT_FILE}' ({len(existing)} produkt(er) totalt)")
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
+    if len(sys.argv) != 2:
+        print("Anvandning: python main_pipeline.py <url>")
+        sys.exit(1)
 
-    if len(args) == 2 and args[0] == "--batch":
-        url_file = Path(args[1])
-        if not url_file.exists():
-            print(f"Filen '{url_file}' hittades inte")
-            sys.exit(1)
-        urls = [line.strip() for line in url_file.read_text().splitlines() if line.strip()]
-        batch_process(urls)
-
-    elif len(args) == 1:
-        result = full_pipeline(args[0])
-
-    else:
-        print("DEMO - pipeline pa tva kjell.com-produkter\n")
-        batch_process(DEMO_URLS, output_file="batch_descriptions.json")
+    run(sys.argv[1])

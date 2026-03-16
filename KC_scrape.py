@@ -48,12 +48,35 @@ def scrape_specs(url: str) -> dict:
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0 Safari/537.36"
+            "Chrome/123.0.0.0 Safari/537.36"
         ),
-        "Accept-Language": "sv-SE,sv;q=0.9",
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;"
+            "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Language": "sv-SE,sv;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Connection": "keep-alive",
     }
 
-    resp = requests.get(url, headers=headers, timeout=15)
+    session = requests.Session()
+    session.headers.update(headers)
+
+    try:
+        resp = session.get(url, timeout=20)
+    except requests.exceptions.ConnectionError:
+        # Some servers reset on first attempt — retry once
+        import time
+        time.sleep(2)
+        resp = session.get(url, timeout=20)
+
     resp.raise_for_status()
 
     data = _extract_current_page_json(resp.text)

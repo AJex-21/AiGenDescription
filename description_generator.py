@@ -12,123 +12,459 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-# ── Buyer personas by category keyword ────────────────────────────────────────
-# Maps a keyword found in the category_path to a buyer description.
-# The model uses this to understand who it is writing for.
+# ── Buyer personas ─────────────────────────────────────────────────────────────
+# Keys are lowercase substrings matched against the product's category_path.
+# ORDER MATTERS: more specific keys must appear before broader ones.
+# All keys are verified stems that match real kjell.com category path strings,
+# including both singular and plural Swedish forms.
 
 BUYER_PERSONAS = {
+
+    # ── Säkerhet & övervakning ─────────────────────────────────────────────────
+    "overvakningskamer": (
+        "Kunden vill veta vad som händer utanför hemmet – uppfarten, trädgården, "
+        "entrén. De oroar sig för inbrott, paketdivar eller obehöriga besökare. "
+        "De vill ha skarp bild i mörker, kunna täcka ett stort område och få "
+        "push-notis när något rör sig. Helst utan att behöva köpa flera kameror."
+    ),
+    "inomhuskamer": (
+        "Kunden vill ha koll på barnen, husdjuren eller hemmet när de är borta. "
+        "De vill ha enkel installation, bra app och tydlig bild dygnet runt. "
+        "Integritet är en fråga – de vill kunna stänga av kameran enkelt."
+    ),
+    "larm": (
+        "Kunden vill skydda hemmet och få ett omedelbart larm om något händer. "
+        "Enkel installation utan borrning, batteridrift och pålitlig "
+        "push-notis på telefonen är det som avgör köpet."
+    ),
+    "las": (
+        "Kunden vill kunna låsa upp dörren utan nyckel – med kod, fingeravtryck "
+        "eller telefon. De vill slippa oroa sig för tappade nycklar och kunna ge "
+        "tidsbegränsad tillgång till gäster utan att lämna ut en kopia."
+    ),
+    "sakerhet": (
+        "Kunden vill ha ökad trygghet hemma eller på arbetsplatsen. "
+        "De söker en konkret lösning på ett verkligt problem – "
+        "inbrott, brand, vattenläcka eller obehörig åtkomst."
+    ),
+
+    # ── TV-spel & gaming ───────────────────────────────────────────────────────
+    "gaming-headset": (
+        "Spelaren vill höra varje steg och kommunicera tydligt med laget. "
+        "Surroundljud, mikrofonkvalitet och komfort under långa sessioner är avgörande. "
+        "De spelar på en specifik plattform – PC, PS5 eller Xbox – och vill veta "
+        "att produkten faktiskt är kompatibel."
+    ),
+    "gaming-mus": (
+        "Spelaren vill ha precis kontroll och snabb respons. "
+        "DPI-omfång, polling rate och hur musen känns i handen under intensiva pass "
+        "är det som avgör. Kabelanslutning föredras av de som vill ha noll latens."
+    ),
+    "gaming-tangentbord": (
+        "Spelaren vill ha snabba och pålitliga knapptryckningar. "
+        "Mekaniska switchar, RGB-belysning och anti-ghosting är de tre "
+        "frågorna de ställer."
+    ),
+    "spelkonsol": (
+        "Kunden vill spela de senaste spelen på storskärm. "
+        "De jämför exklusiva spel, prestanda och pris. "
+        "Kompatibilitet med befintliga spel och tillbehör spelar roll."
+    ),
+    "gaming": (
+        "Spelaren söker utrustning som ger konkreta fördelar i spelet "
+        "eller gör upplevelsen mer immersiv och bekväm."
+    ),
+
+    # ── Dator ──────────────────────────────────────────────────────────────────
+    "webbkamera": (
+        "Kunden jobbar hemifrån eller streamar och vill se bra ut på video. "
+        "Upplösning, autofokus och bildfrekvens är avgörande. "
+        "Plug-and-play utan drivrutinsinstallation föredras."
+    ),
+    "laptop": (
+        "Kunden söker en bärbar dator för arbete, studier eller hemmabruk. "
+        "De väger prestanda mot pris och vill veta om den klarar det de planerar "
+        "att använda den till – videosamtal, dokument, enkel bildredigering."
+    ),
+    "tangentbord": (
+        "Kunden skriver mycket och vill ha bättre ergonomi eller skrivupplevelse. "
+        "För gaming handlar det om svarstid och RGB. "
+        "För kontor handlar det om tyst typkänsla och trådlöshet."
+    ),
+    "mus": (
+        "Kunden vill ha bättre precision eller komfort. "
+        "Gamers bryr sig om DPI och svarstid. "
+        "Kontorsanvändare bryr sig om grepp och om den är trådlös."
+    ),
+    "skarm": (
+        "Kunden vill ha en större eller bättre skärm. "
+        "De jämför upplösning, bildfrekvens och storlek mot pris. "
+        "Gamers vill ha låg input lag. Kontorsanvändare prioriterar färgåtergivning."
+    ),
+    "ssd": (
+        "Kunden vill snabba upp sin dator eller få mer lagring. "
+        "Läs- och skrivhastighet samt kapacitet i förhållande till pris är avgörande."
+    ),
+    "harddisk": (
+        "Kunden har slut på lagringsutrymme eller vill säkerhetskopiera. "
+        "Kapacitet, hastighet och om den är portabel eller stationär avgör."
+    ),
+    "skrivare": (
+        "Kunden behöver skriva ut hemma. De vill veta sidkostnad per utskrift "
+        "och om den stödjer trådlös utskrift från telefon och dator."
+    ),
+    "dator": (
+        "Kunden söker datortillbehör som gör arbets- eller spelupplevelsen bättre. "
+        "Prestanda, kompatibilitet och enkel installation är viktigast."
+    ),
+
+    # ── Belysning & lampor ─────────────────────────────────────────────────────
+    "utomhusbelysning": (
+        "Kunden vill belysa trädgård, uppfart eller entré – för säkerhetens "
+        "eller stämningens skull. Rörelsesensor, solcellsdrift och "
+        "vattentålighet är de viktigaste funktionerna."
+    ),
+    "skrivbordslampa": (
+        "Kunden arbetar eller studerar och vill ha bra arbetsbelysning. "
+        "Justerbar ljusstyrka, färgtemperatur och att den inte tröttar ut "
+        "ögonen är avgörande. USB-laddning i foten är ett plus."
+    ),
+    "led-lamp": (
+        "Kunden byter ut gamla glödlampor eller halogener. "
+        "Rätt sockel, rätt färgtemperatur och lång livslängd. "
+        "Energibesparing jämfört med vad som byts ut är ett starkt argument."
+    ),
+    "lampor": (
+        "Kunden söker belysning för ett specifikt syfte – arbete, stämning, "
+        "säkerhet eller dekoration. Rätt ljus för rätt plats."
+    ),
+
+    # ── Smarta hem ─────────────────────────────────────────────────────────────
+    "robotdammsugare": (
+        "Kunden vill slippa dammsuga. De vill att golven är rena utan att de "
+        "behöver göra något. De undrar om den klarar deras golvtyp, husdjurshår "
+        "och mattor – och om den hittar hem igen. En station som tömmer sig "
+        "själv är ett mycket starkt argument."
+    ),
+    "smart-belysning": (
+        "Kunden vill styra ljuset hemifrån telefonen eller med röst. "
+        "De vill skapa stämning och automatisera lampor. "
+        "Kompatibilitet med befintligt system – Hue, IKEA, Google, Apple – avgör."
+    ),
+    "smart-plugg": (
+        "Kunden vill göra vanliga apparater smarta utan att byta ut dem. "
+        "Slå av och på via app och schemalägga. "
+        "Maxeffekt och om den mäter energiförbrukning är relevanta frågor."
+    ),
+    "smart-hogtalare": (
+        "Kunden vill ha en röstassistent i rummet för musik, timers och "
+        "smarthemsstyrning. Vilket ekosystem de redan är i – "
+        "Google, Amazon eller Apple – avgör vilket alternativ som passar."
+    ),
+    "smarta hem": (
+        "Kunden bygger eller utökar sitt smarta hem. De söker enheter som "
+        "fungerar med befintligt ekosystem och ger verklig nytta i vardagen – "
+        "automatisering, energibesparing eller ökad komfort."
+    ),
+
+    # ── Ljud & bild ────────────────────────────────────────────────────────────
     "sovhorlurar": (
-        "Kunden vill sova bättre. De störs av ljud från partner, grannar eller resor. "
-        "De prioriterar passform for sidosovare, komfort under hela natten och funktioner "
-        "som blockerar storande ljud eller spelar upp lugnande ljud."
+        "Kunden störs av ljud på natten – partner, grannar, hotell eller pendling. "
+        "De prioriterar passform för sidosovare, hur länge de orkar ha dem på sig "
+        "och hur effektivt de blockerar eller maskerar störande ljud."
     ),
     "brusreducerande": (
-        "Kunden pendlar, arbetar i oppen kontorsmiljo eller reser ofta med flyg. "
-        "De vill stanga ute omgivningsljud och fokusera pa musik, podcasts eller arbete. "
-        "Batteritid och kvaliteten pa brusreduceringen ar avgörande."
+        "Kunden pendlar dagligen eller arbetar i öppen kontorsmiljö. "
+        "De vill stänga ute omgivningsljud och fokusera på musik, podcast eller arbete. "
+        "ANC-kvalitet och batteritid under en hel arbetsdag är avgörande."
     ),
     "sporthorlurar": (
-        "Kunden tranas regelbundet – gym, lopning eller cykling. "
-        "De behover horlurar som sitter stadigt, tal svett och inte stor under traningen. "
-        "Vattentolighet, passform och batteritid ar viktigast."
+        "Kunden tränar regelbundet – gym, löpning eller cykling. "
+        "De behöver hörlurar som sitter kvar oavsett rörelseintensitet "
+        "och som överlever svettiga pass. IP-klassning och passform avgör."
     ),
     "airpods": (
-        "Kunden ar djupt inne i Apples ekosystem med iPhone, iPad eller Mac. "
-        "De vardesar somlös integration, premium-kansla och att det bara fungerar. "
-        "De jamfor mot foregaende generation och vill veta vad som faktiskt ar battre."
+        "Kunden har iPhone och vill ha hörlurar som fungerar direkt – "
+        "ingen parning, inga inställningar. De jämför mot föregående "
+        "AirPods-generation och vill veta vad som faktiskt är bättre."
     ),
-    "tradlosa-bluetooth-horlurar": (
-        "Kunden vill ha ett palitligt par tradlosa horlurar for vardagsbruk – "
-        "promenader, kollektivtrafik och hemmabruk. De ar prismedvetna och vill ha "
-        "bra varde for pengarna utan att kompromissa med grundlaggande funktioner."
+    "tradlosa bluetooth": (
+        "Kunden vill ha ett pålitligt vardagspar för pendling, promenader "
+        "och hemmabruk. De är prismedvetna och vill ha bra värde utan att "
+        "kompromissa med batteritid och stabil anslutning."
     ),
-    "in-ear-horlurar": (
-        "Kunden letar efter ett sekundart par horlurar eller sitt forsta kop. "
-        "De vill ha enkel hantering, bra ljud for priset och en passform som haller. "
-        "Enkelt och tillforlitligt ar viktigare an avancerade funktioner."
+    "true-wireless": (
+        "Kunden vill ha helt trådlösa hörlurar utan kabel. "
+        "Total batteritid inklusive etui och hur bra de sitter är avgörande."
     ),
-    "minneskort": (
-        "Kunden ar fotograf, videograf, dronarpilot eller mobilanvandare som "
-        "standigt far slut pa lagringsutrymme. De bryr sig om kompatibilitet med sin "
-        "enhet, skrivhastighet for videoinspelning och lashastiget for filoverföring."
+    "in-ear": (
+        "Kunden söker enkla hörlurar som fungerar – backup, träning eller första par. "
+        "Bra ljud för priset och en passform som håller."
     ),
-    "streaming-mediaspelare": (
-        "Kunden vill gora sin tv smartare utan att kopa en ny. "
-        "De vill strömma Netflix, YouTube och andra tjanster enkelt. "
-        "Enkel installation, stabil anslutning och stod for 4K ar avgörande."
+    "headset": (
+        "Kunden behöver hörlurar med mikrofon för samtal, videomöten eller gaming. "
+        "Mikrofonkvaliteten är minst lika viktig som ljudet – "
+        "tydlig röst åt båda håll utan bakgrundsbrus."
     ),
     "soundbar": (
-        "Kunden vill forbattra tv-ljudet utan ett fullstandigt surroundsystem. "
-        "De bor i lagenhet eller vill ha en enkel losning. "
-        "Ljudkvalitet, enkel installation och att den matchar tv:n ar viktigt."
+        "Kunden är trött på tv:ns inbyggda högtalare men vill inte ha ett "
+        "fullständigt surroundsystem. Hur mycket bättre det låter och "
+        "hur enkel installationen är – det är de två frågorna."
     ),
-    "mikrofoner": (
-        "Kunden skapar innehall – videor, podcasts, streams eller moten. "
-        "De vill ha tydligt ljud utan bakgrundsbrus och enkel anslutning "
-        "till kamera, dator eller telefon."
+    "hogtalare": (
+        "Kunden vill ha ljud i ett rum utan kabeldragning. "
+        "Batteritid, vattentålighet och ljudkvalitet i förhållande till pris avgör."
     ),
-    "rengoring": (
-        "Kunden vill halla sina skarmar och elektronik i bra skick. "
-        "De vill ha ett palitligt kit som inte repar ytor och ar enkelt att anvanda."
+    "streaming-mediaspelare": (
+        "Kunden vill göra sin befintliga tv smart utan att köpa en ny. "
+        "4K-stöd, enkel installation och stabil wifi-anslutning är avgörande."
     ),
-    "cd-spelare": (
-        "Kunden har en cd-samling och vill kunna lyssna pa den igen, "
-        "hemma eller pa resande fot. Enkelhet och portabilitet ar avgörande."
+    "minneskort": (
+        "Kunden har kamera, drönare, dashcam eller mobil som ständigt går fullt. "
+        "Kompatibilitet med enheten först, skrivhastighet för video sedan."
+    ),
+    "kamera": (
+        "Kunden vill fånga minnen enkelt och med bra resultat. "
+        "För direktbildskameror handlar det om den sociala upplevelsen "
+        "att få en bild i handen direkt."
+    ),
+    "mikrofon": (
+        "Kunden skapar innehåll – YouTube, podcast, stream eller videomöten. "
+        "Tydligt ljud utan bakgrundsbrus och enkel anslutning till enhet. "
+        "Plug-and-play föredras framför komplicerad setup."
     ),
     "radio": (
-        "Kunden vill ha ett palitligt satt att lyssna pa radio utan internetuppkoppling. "
-        "Viktigt vid stromavbrott, friluftsliv eller som nodradio."
+        "Kunden vill lyssna på radio utan internet eller elnät. "
+        "Viktigt vid strömavbrott, friluftsliv och camping. "
+        "Vevladdning och solcell ger extra trygghet."
+    ),
+    "skivspelare": (
+        "Kunden lyssnar på vinyl och vill ha bra återgivning av sin skivsamling. "
+        "De värdesätter analog ljudkvalitet och vill att skivan behandlas väl."
+    ),
+    "cd-spelare": (
+        "Kunden har en cd-samling och vill lyssna på den hemma eller på resan. "
+        "Enkelhet och portabilitet är avgörande."
+    ),
+    "musikmottagare": (
+        "Kunden vill trådlöst strömma musik till befintligt stereo- eller billjudsystem. "
+        "Enkel installation och stabil Bluetooth-anslutning är allt som krävs."
+    ),
+    "rengoring": (
+        "Kunden vill hålla skärmar och elektronik i bra skick utan risk för repor. "
+        "Komplett kit som fungerar på alla ytor och är enkelt att använda."
+    ),
+    "ljud": (
+        "Kunden vill förbättra sin ljudupplevelse hemma eller på språng. "
+        "De söker ett konkret lyft i kvalitet eller funktion jämfört med idag."
+    ),
+
+    # ── Mobilt ─────────────────────────────────────────────────────────────────
+    "powerbank": (
+        "Kunden reser ofta eller är mycket ute och kan inte alltid ladda. "
+        "De vill ha kapacitet för en hel dag eller mer utan tillgång till vägguttag. "
+        "Vikt och storlek spelar roll för om den faktiskt tas med."
+    ),
+    "mobilskal": (
+        "Kunden har köpt en ny telefon och vill skydda den direkt. "
+        "Skydd mot tapp utan att telefonen känns klumpig i fickan. "
+        "Tunnhet och grepp är viktigast."
+    ),
+    "skarmskydd": (
+        "Kunden är rädd för att spricka skärmen. "
+        "Skydd som inte påverkar touchkänslan och enkel montering utan luftbubblor."
+    ),
+    "mobilt": (
+        "Kunden söker mobiltillbehör som gör telefonen mer användbar i vardagen – "
+        "skydd, laddning, hantering eller konnektivitet."
+    ),
+
+    # ── Nätverk ────────────────────────────────────────────────────────────────
+    "mesh": (
+        "Kunden har ett större hem eller flera våningar med dålig täckning. "
+        "De vill eliminera döda zoner en gång för alla med ett system "
+        "som är enkelt att ställa in och hantera via app."
+    ),
+    "router": (
+        "Kunden har dåligt wifi hemma – döda zoner, dålig räckvidd i tjocka väggar "
+        "eller för många enheter som tävlar om bandbredd. "
+        "De vill ha stabilt internet i hela hemmet utan att bli nätverkstekniker."
+    ),
+    "switch": (
+        "Kunden vill koppla upp fler enheter med kabel för stabilare anslutning. "
+        "Antal portar och gigabit-stöd är det enda som spelar roll."
+    ),
+    "natverkskabel": (
+        "Kunden drar kabel för stabilare och snabbare anslutning än wifi. "
+        "Rätt kategori för sin hastighet och tillräcklig längd."
+    ),
+    "natverk": (
+        "Kunden söker en lösning för bättre och mer pålitlig internetuppkoppling "
+        "hemma eller på kontoret."
+    ),
+
+    # ── El & verktyg ───────────────────────────────────────────────────────────
+    "multimeter": (
+        "Kunden arbetar med el – hobbyist, elektriker eller tekniker. "
+        "Mätnoggrannhet, säkerhetsklass och mätomfång är avgörande."
+    ),
+    "lodning": (
+        "Kunden löder elektronik för hobbyprojekt eller reparation. "
+        "Stabil temperatur, snabb uppvärmning och god kontrollerbarhet."
+    ),
+    "ficklampa": (
+        "Kunden vill ha pålitlig belysning i mörker – vid strömavbrott, "
+        "friluftsliv eller i verkstaden. Ljusstyrka i lumen, räckvidd "
+        "och batteritid är avgörande. Vattentålighet vid utomhusbruk."
+    ),
+    "batteri": (
+        "Kunden behöver ersättningsbatterier till fjärrkontroller, ficklampor "
+        "eller leksaker. Pålitliga batterier som håller länge. "
+        "Låg självurladdning är viktigt för sällanvändarenheter."
+    ),
+    "el": (
+        "Kunden söker elektriska komponenter, verktyg eller tillbehör "
+        "för ett specifikt projekt eller reparation."
+    ),
+
+    # ── Kablar & kontakter ─────────────────────────────────────────────────────
+    "laddkabel": (
+        "Kunden behöver ny laddkabel – gammal är sönder eller de vill ha en extra. "
+        "Den ska tåla daglig användning och ladda i rätt hastighet för deras enhet."
+    ),
+    "hdmi": (
+        "Kunden kopplar ihop tv, dator, konsol eller projektor. "
+        "Rätt HDMI-version för sin upplösning och bildfrekvens – "
+        "2.1 för 4K/120Hz, 2.0 för 4K/60Hz."
+    ),
+    "forlangningssladd": (
+        "Kunden har för få vägguttag på rätt ställe. "
+        "Rätt antal uttag, rätt kabellängd och USB-laddning i samma enhet. "
+        "Överspänningsskydd ger extra trygghet."
+    ),
+    "kablar": (
+        "Kunden behöver rätt kabel för att koppla ihop sina enheter. "
+        "Rätt kontakttyp, rätt längd och rätt hastighetsspecifikation."
+    ),
+
+    # ── Kontor ─────────────────────────────────────────────────────────────────
+    "ergonomi": (
+        "Kunden arbetar mycket vid dator och känner av nackspärr, ryggvärk "
+        "eller handledsbesvär. De söker utrustning som minskar belastningen – "
+        "justeringsmöjligheter och rörelsefrihet är avgörande."
+    ),
+    "skanner": (
+        "Kunden digitaliserar dokument, foton eller kvitton. "
+        "Upplösning, automatisk dokumentmatning och medföljande programvara avgör."
+    ),
+    "kontor": (
+        "Kunden söker kontorsutrustning för ett effektivare och bekvämare arbete – "
+        "organisation, ergonomi eller produktivitet."
+    ),
+
+    # ── Hem & fritid ───────────────────────────────────────────────────────────
+    "halsa": (
+        "Kunden bryr sig om sin hälsa och vill ha ett enkelt sätt att "
+        "mäta eller följa upp sin hälsa i vardagen utan komplicerade rutiner."
+    ),
+    "barn": (
+        "Föräldern söker en produkt till sitt barn. "
+        "Säkerhet, ålderslämplighet och hög hållbarhet är viktigast."
+    ),
+    "hem": (
+        "Kunden söker produkter som gör hemlivet enklare, snyggare "
+        "eller mer funktionellt."
+    ),
+
+    # ── Top-level category fallbacks ──────────────────────────────────────────
+    # These catch any product whose subcategory has no specific persona above.
+    "belysning": (
+        "Kunden söker belysning för ett specifikt syfte – arbete, stämning, "
+        "säkerhet eller dekoration. Rätt ljus för rätt plats."
+    ),
+    "tv-spel": (
+        "Kunden söker spelrelaterad utrustning eller ett specifikt spel. "
+        "Plattformskompatibilitet och vad som faktiskt förbättrar spelupplevelsen "
+        "är de viktigaste frågorna."
     ),
 }
 
 DEFAULT_PERSONA = (
-    "Kunden ar en allman konsument som letar efter en produkt som loser ett konkret "
-    "vardagsproblem. De vill ha tydlig och arlig information om vad produkten gor "
-    "och varfor den ar vard pengarna."
+    "Kunden söker en produkt som löser ett konkret problem i vardagen. "
+    "De vill ha tydlig och ärlig information om vad produkten faktiskt gör "
+    "och om den är värd priset. Var specifik – vaghet skapar inte förtroende."
 )
 
 
+def _normalize(text: str) -> str:
+    """Lowercase and replace Swedish special chars with ASCII equivalents."""
+    return (
+        text.lower()
+        .replace("\xe5", "a")  # å
+        .replace("\xe4", "a")  # ä
+        .replace("\xf6", "o")  # ö
+        .replace("\xe9", "e")  # é
+    )
+
+
 def get_persona(category_path: str) -> str:
-    """Return the buyer persona that best matches the category path."""
-    path_lower = category_path.lower()
+    """Return the most specific buyer persona matching the category path."""
+    path_norm = _normalize(category_path)
     for keyword, persona in BUYER_PERSONAS.items():
-        if keyword in path_lower:
+        if _normalize(keyword) in path_norm:
             return persona
     return DEFAULT_PERSONA
 
 
-# ── Few-shot examples from actual Kjell pages ─────────────────────────────────
+# ── Few-shot examples ──────────────────────────────────────────────────────────
+# Three real approved descriptions from kjell.com, covering three different
+# product types and price points. The model calibrates tone and format to these.
 
 FEW_SHOT_EXAMPLES = """
-EXAMPLE 1 — Linocell TWS Earphones (budget tradlosa horlurar)
+EXAMPLE 1 — Linocell TWS Earphones (budget trådlösa hörlurar)
 INPUT:
-  Kategori: Horlurar & headset > Tradlosa Bluetooth-horlurar
-  Koparprofil: Vardagsanvandare som vill ha ett palitligt par tradlosa horlurar for ett bra pris
-  Nyckelfunktioner: IPX4, 21 timmars batteritid (7h + 14h via etui), Bluetooth 5.1, Siri/Google Assistant, USB-C
+  Kategori: Hörlurar & headset > Trådlösa Bluetooth-hörlurar
+  Köparprofil: Vardagsanvändare, prismedveten, vill ha pålitlig grundkvalitet
+  Nyckelfunktioner: IPX4, 21h batteritid (7h + 14h etui), Bluetooth 5.1, Siri/Google Assistant
   Pris: 199 kr (ord. 399 kr)
 
 OUTPUT:
   SUBTITLE: Musik och samtal – helt utan kablar
   BULLETS:
-    - IPX4 – tal svett och regn
-    - Lang batteritid (21 timmar)
-    - Stod for Siri och Google Assistant
-  DESCRIPTION: Smidiga, kompakta och alltid redo – Linocell TWS later dig lyssna pa musik och ta samtal helt utan sladdar som ar i vagen. Batteritiden pa 7 timmar forlangs med ytterligare 14 timmar nar lurarna laddas i etuit. Stabil tradlos anslutning till mobil, surfplatta och dator via Bluetooth 5.1. Tal vattenstank enligt IPX4.
+    - IPX4 – tål svett och regn
+    - Lång batteritid (21 timmar totalt)
+    - Stöd för Siri och Google Assistant
+  DESCRIPTION: Smidiga, kompakta och alltid redo – Linocell TWS låter dig lyssna på musik och ta samtal helt utan sladdar i vägen. Batteritiden på 7 timmar förlängs med ytterligare 14 timmar när lurarna laddas i etuit. Stabil Bluetooth 5.1-anslutning till mobil, surfplatta och dator. Tål vattenstänk enligt IPX4. Laddas med medföljande USB-C-kabel.
 
 EXAMPLE 2 — Apple AirPods Pro 3 (premium brusreducerande)
 INPUT:
-  Kategori: Horlurar & headset > AirPods
-  Koparprofil: Apple-anvandare som jamfor mot foregaende generation och vill veta vad som faktiskt ar nytt
-  Nyckelfunktioner: 2x mer brusreducering vs Pro 2, inbyggd pulsmaning, IP57, ny design med 5 orontopp-storlekar, 8h batteritid med ANC
+  Kategori: Hörlurar & headset > AirPods
+  Köparprofil: Apple-användare som jämför mot föregående generation, vill veta vad som är nytt
+  Nyckelfunktioner: 2x mer ANC vs Pro 2, inbyggd pulsmätare, IP57, 5 örontopp-storlekar, 8h batteritid
   Pris: 2 889 kr
 
 OUTPUT:
-  SUBTITLE: Varldens basta aktiva brusreducering for in ear-horlurar.
+  SUBTITLE: Världens bästa aktiva brusreducering för in ear-hörlurar
   BULLETS:
-    - Dubbelt sa bra brusreducering och inbyggd pulsmatare
-    - Tal damm, svett och vatten (IP57)
-    - Med ny design for sakrare passform
-  DESCRIPTION: AirPods Pro 3 har upp till 2x mer aktiv brusreducering jamfort med AirPods Pro 2. Nu med pulsmaning, langre batteritid och framsteg inom horselhalsa. Med ny design for sakrare passform.
+    - Dubbelt så bra brusreducering och inbyggd pulsmätare
+    - Tål damm, svett och vatten (IP57)
+    - Ny design med fem örontopp-storlekar för säkrare passform
+  DESCRIPTION: AirPods Pro 3 tar bort upp till 2x mer oönskat ljud än AirPods Pro 2. Den inbyggda pulsmätaren låter dig följa träning direkt i hörlurarna. Ny akustisk arkitektur ger fylligare bas och tydligare detaljer. Finns i fem örontopp-storlekar för en säkrare passform.
+
+EXAMPLE 3 — TP-link Tapo C545D (utomhuskamera med dubbla linser)
+INPUT:
+  Kategori: Säkerhet & övervakning > Övervakningskameror
+  Köparprofil: Vill bevaka uppfart, trädgård eller garage med överblick och detaljskärpa
+  Nyckelfunktioner: Dubbla 2K-linser, AI-spårning, fullfärgsnattseende, IP66, 99 dB siren
+  Pris: kampanjpris
+
+OUTPUT:
+  SUBTITLE: Överblick och detalj – i en och samma kamera
+  BULLETS:
+    - Dubbla 2K-linser med synkroniserad AI-spårning
+    - Fullfärgsnattseende och 99 dB-siren
+    - IP66-klassad för utomhusbruk året runt
+  DESCRIPTION: Tapo C545D kombinerar en fast vidvinkellins och en rörlig telefoto-lins i samma enhet. Vidvinkellinsen ger helhetsbild över området medan AI automatiskt zoomar in telelinsen och följer rörelser. Det gör att du kan bevaka uppfarten, trädgården eller garaget med både överblick och detaljskärpa – utan att behöva flera kameror.
 """
 
 
@@ -167,20 +503,22 @@ class KjellProduct:
         price_line = price_str
         if original_str and original_str != price_str:
             price_line += f" (ord. {original_str})"
-        if discount_str:
+        if discount_str and self.price_discount_pct and self.price_discount_pct > 0:
             price_line += f" — {discount_str} rabatt"
 
         return {
             "Produktnamn":    self.product_name,
-            "Varumarke":      self.brand,
+            "Varumärke":      self.brand,
             "Kategori":       self.category_path,
             "Pris":           price_line,
-            "Nuvarande undertitel (skriv inte av denna)": self.subtitle,
-            "Nyckelfunktioner": self.usps,
-            "Befintlig kort beskrivning (faktakalla, skriv inte av)":
+            "Nuvarande undertitel (skriv INTE av denna)":
+                self.subtitle,
+            "Nyckelfunktioner (USP)":
+                self.usps,
+            "Befintlig kort beskrivning (faktakälla – skriv inte av, men använd faktan)":
                 self.short_description,
-            "Utokad information (faktakalla)":
-                self.long_description[:1500] if self.long_description else "",
+            "Utökad produktinformation (faktakälla)":
+                self.long_description[:2000] if self.long_description else "",
         }
 
 
@@ -189,11 +527,11 @@ class KjellProduct:
 class DescriptionGenerator:
 
     SYSTEM_PROMPT = (
-        "Du ar en erfaren copywriter som skriver produkttexter for kjell.com. "
-        "Du skriver pa svenska i Kjells etablerade stil: kortfattad, faktabaserad och direkt. "
-        "Du skriver aldrig vaga fraser, namnner aldrig kundbetyg, skriver aldrig CTA som "
-        "'Las mer pa kjell.com' och hittar aldrig pa specifikationer. "
-        "Du skriver exakt det format som efterfragas och ingenting annat."
+        "Du är en erfaren copywriter som skriver produkttexter för kjell.com. "
+        "Du skriver på svenska i Kjells etablerade stil: kortfattad, faktabaserad och direkt. "
+        "Du hittar aldrig på specifikationer. Du nämner aldrig kundbetyg. "
+        "Du skriver aldrig fraser som slutar med 'kjell.com'. "
+        "Du skriver exakt det format som efterfrågas – ingenting mer, ingenting mindre."
     )
 
     def __init__(self):
@@ -203,10 +541,6 @@ class DescriptionGenerator:
         self.client = Groq(api_key=api_key)
 
     def generate(self, specs_json: str, url: str = "") -> dict:
-        """
-        Generate a product description from JSON specs.
-        Returns a dict with keys: subtitle, bullets (list), description.
-        """
         try:
             product = KjellProduct.from_json(specs_json)
         except (json.JSONDecodeError, TypeError) as exc:
@@ -221,38 +555,35 @@ class DescriptionGenerator:
         product_data = json.dumps(product.to_prompt_dict(), ensure_ascii=False, indent=2)
 
         return f"""
-Du ska skriva en ny produkttext for kjell.com. Studera exemplen noggrant –
-de visar exakt den stil, ton och det format som anvands pa sajten.
+Du ska skriva en ny produkttext för kjell.com. Studera de tre exemplen noggrant –
+de visar exakt den stil, ton och det format som används och godkänns på sajten.
 
 {FEW_SHOT_EXAMPLES}
 
-Nu ska du skriva for denna produkt:
+────────────────────────────────────────────────────────────
+Skriv nu för denna produkt:
 
 PRODUKTDATA:
 {product_data}
 
-KOPARPROFIL:
+KÖPARPROFIL – vem du skriver för och vad de faktiskt bryr sig om:
 {persona}
 
 ────────────────────────────────────────────────────────────
 Skriv exakt detta och ingenting annat:
 
-SUBTITLE: [En kort, karngfull mening som fanger produktens viktigaste fordel. Max 10 ord.]
+SUBTITLE: [En ny, kortfattad mening som fångar produktens viktigaste fördel. Max 10 ord. Imitera exemplens stil. Kopiera INTE den befintliga undertiteln.]
 
 BULLETS:
-- [Specifik funktion – inkludera siffror/spec inom parentes om tillgangligt]
-- [Specifik funktion – inkludera siffror/spec inom parentes om tillgangligt]
-- [Specifik funktion – inkludera siffror/spec inom parentes om tillgangligt]
+- [Specifik funktion med exakt siffra eller spec inom parentes om data finns]
+- [Specifik funktion med exakt siffra eller spec inom parentes om data finns]
+- [Specifik funktion med exakt siffra eller spec inom parentes om data finns]
 
-DESCRIPTION: [2-4 meningar. Faktabaserad. Exakta siffror nar de finns. Borja inte med produktnamnet. Skriv for koparprofilen ovan. Max 70 ord.]
+DESCRIPTION: [2–5 meningar. Max 90 ord. Börja INTE med produktnamnet. Förklara hur den viktigaste funktionen löser ett konkret problem för köparprofilen ovan. Använd specifika vardagsscenarier om de finns i produktdatan. Inga vaga fraser. Inga kundbetyg. Ingen CTA. Inga meningar som slutar med "kjell.com".]
 
-REGLER SOM ALDRIG FAR BRYTAS:
-- Hitta inte pa specifikationer som inte finns i produktdatan
-- Skriv inte av undertiteln
-- Inga meningar med "kjell.com"
-- Inga fraser: "ett bra val", "passar perfekt", "hog kvalitet", "ett sakert val"
-- Namnn aldrig kundbetyg eller antal recensioner
-- Skriv inte "Nu till kampanjpris"
+FÖRBJUDNA FRASER – skriv aldrig:
+"ett bra val" / "passar perfekt" / "hög kvalitet" / "ett säkert val" /
+"Nu till kampanjpris" / kundbetyg / recensioner / specifikationer som inte finns i produktdatan
 """
 
     def _call_llm(self, prompt: str) -> dict:
@@ -264,14 +595,14 @@ REGLER SOM ALDRIG FAR BRYTAS:
                     {"role": "user",   "content": prompt},
                 ],
                 temperature=0.3,
-                max_tokens=400,
+                max_tokens=500,
             )
 
             raw = completion.choices[0].message.content.strip()
             logger.debug(f"Raw response: {raw}")
 
             if not raw:
-                return {"error": "Tom respons fran modellen"}
+                return {"error": "Tom respons från modellen"}
 
             return self._parse_output(raw)
 
@@ -280,9 +611,7 @@ REGLER SOM ALDRIG FAR BRYTAS:
             return {"error": str(exc)}
 
     def _parse_output(self, raw: str) -> dict:
-        """Parse the structured SUBTITLE / BULLETS / DESCRIPTION output."""
         result = {"subtitle": "", "bullets": [], "description": "", "raw": raw}
-
         lines = raw.splitlines()
         mode = None
 
@@ -290,33 +619,27 @@ REGLER SOM ALDRIG FAR BRYTAS:
             line = line.strip()
             if not line:
                 continue
-
             if line.upper().startswith("SUBTITLE:"):
                 result["subtitle"] = line.split(":", 1)[1].strip()
                 mode = None
-
             elif line.upper().startswith("BULLETS:"):
                 mode = "bullets"
-
             elif line.upper().startswith("DESCRIPTION:"):
                 result["description"] = line.split(":", 1)[1].strip()
                 mode = "description"
-
             elif mode == "bullets" and line.startswith("-"):
                 result["bullets"].append(line.lstrip("- ").strip())
-
             elif mode == "description" and result["description"]:
                 result["description"] += " " + line
 
         return result
 
 
-# ── Formatted print helper ─────────────────────────────────────────────────────
+# ── Output formatter ───────────────────────────────────────────────────────────
 
 def format_output(result: dict, url: str = "") -> str:
     if "error" in result:
         return f"FEL: {result['error']}"
-
     lines = ["\n" + "="*70]
     if url:
         lines.append(f"URL         : {url}")
@@ -329,7 +652,7 @@ def format_output(result: dict, url: str = "") -> str:
     return "\n".join(lines)
 
 
-# ── Public convenience functions ───────────────────────────────────────────────
+# ── Public API ─────────────────────────────────────────────────────────────────
 
 def generate_description_from_json(specs_json: str) -> dict:
     return DescriptionGenerator().generate(specs_json)
@@ -346,31 +669,32 @@ def generate_description_from_url(url: str) -> dict:
 # ── Standalone test ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     sample_json = json.dumps({
-        "product_name":       "Linocell TWS Earphones Tradlosa horlurar",
-        "subtitle":           "Musik och samtal – helt utan kablar",
-        "brand":              "Linocell",
-        "article_number":     "24224",
-        "category_path":      "Ljud & bild > Horlurar & headset > Tradlosa Bluetooth-horlurar",
-        "price_current":      199.0,
-        "price_original":     399.0,
-        "price_discount_pct": 50.0,
-        "price_type":         "member",
+        "product_name":       "TP-link Tapo C545D övervakningskamera",
+        "subtitle":           "Dubbla linser – en kamera",
+        "brand":              "TP-link",
+        "article_number":     "69980",
+        "category_path":      "Säkerhet & övervakning > Kameraövervakning > Övervakningskameror",
+        "price_current":      799.0,
+        "price_original":     999.0,
+        "price_discount_pct": 20.0,
+        "price_type":         "campaign",
         "usps": [
-            "IPX4 – tal svett och regn",
-            "Lang batteritid (21 timmar)",
-            "Stod for Siri och Google Assistant",
+            "Dubbla 2K-linser med synkroniserad AI-spårning",
+            "Fullfärgsnattseende och 99 dB-siren",
+            "IP66-klassad för utomhusbruk året runt",
         ],
         "short_description": (
-            "Smidiga, kompakta och alltid redo – Linocell TWS later dig lyssna pa musik "
-            "och ta samtal helt utan sladdar som ar i vagen."
+            "Tapo C545D kombinerar en fast vidvinkellins och en rörlig telefoto-lins. "
+            "Vidvinkellinsen ger helhetsbild medan AI zoomar in och följer rörelser."
         ),
         "long_description": (
-            "Batteritiden pa 7 timmar forlangs med ytterligare 14 timmar nar lurarna laddas "
-            "i etuit. Stabil tradlos anslutning via Bluetooth 5.1. Stod for Siri och Google "
-            "Assistant. Tal vattenstank enligt IPX4. Laddas med medfoljande USB-C-kabel."
+            "Bevakar uppfarten, trädgården eller garaget med både helhetsbild och "
+            "detaljskärpa utan att behöva flera kameror. "
+            "Fullfärgsnattseende ger tydliga bilder i mörker. "
+            "Den inbyggda 99 dB-sirenen aktiveras manuellt eller automatiskt."
         ),
-        "rating": 4.0,
-        "number_of_ratings": 138,
+        "rating": 4.5,
+        "number_of_ratings": 42,
     }, ensure_ascii=False)
 
     result = generate_description_from_json(sample_json)
