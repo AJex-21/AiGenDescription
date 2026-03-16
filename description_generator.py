@@ -336,7 +336,7 @@ def generate_description_from_json(specs_json: str) -> dict:
 
 
 def generate_description_from_url(url: str) -> dict:
-    from website import scrape_kjell_specs_json
+    from KC_scrape import scrape_kjell_specs_json
     specs_json = scrape_kjell_specs_json(url)
     result = DescriptionGenerator().generate(specs_json, url)
     print(format_output(result, url))
