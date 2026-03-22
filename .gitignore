@@ -1,7 +1,13 @@
 __pycache__/
+*.pyc
 .env
 venv/
+
+# Generated outputs — not committed
 batch_descriptions.json
-*.pyc
-testURLs.txt
+*.json
+
+# Dev / scratch files
+debug.py
 compare.py
+testURLs.txt
