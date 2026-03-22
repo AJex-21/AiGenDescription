@@ -44,5 +44,28 @@
     ],
     "generated_description": "Dålig täckning i hemmet är ett minne blott med ett mesh-system som täcker upp till 500 m². Varje mesh-nod har 3 ethernet-portar för anslutning till exempelvis dator, TV och nätverksswitch. Installationen sker enkelt via appen TP-link Deco.",
     "url": "https://www.kjell.com/se/produkter/natverk/tradlosa-routrar/tp-link-deco-s7-mesh-system-ac1900-p64728"
+  },
+  "https://www.kjell.com/se/produkter/mobilt/mobilladdare/usb-laddare/linocell-usb-c-laddare-med-pd-20-w-vit-p89300": {
+    "product_name": "Linocell USB-C-laddare med PD 20 W Vit",
+    "brand": "Linocell",
+    "article_number": "89300",
+    "category_path": "Mobilt > Mobilladdare > USB-laddare > Linocell USB-C-laddare med PD 20 W Vit",
+    "price_current": 199.9,
+    "price_original": 199.9,
+    "price_discount_pct": 0.0,
+    "original_usps": [
+      "Upp till 20 W snabbladdning",
+      "Extremt liten - perfekt för resan",
+      "Perfekt till Apple Magsafe"
+    ],
+    "original_description": "En liten och kraftfull USB-PD-laddare med stöd för snabbladdning. Laddar din iPhone upp till 50 % på bara 30 minuter (iPhone 13 och senare). Passar även perfekt som tillbehör till Apple Magsafe-laddare samt övriga QI-laddare. Snabbladdar även andra enheter med stöd för USB-PD eller Quick-Charge 3.0. USB-kabel säljes separat.  Medlemserbjudande: 20 % rabatt vid  \n\n köp av  2 valfria mobiltillbehör från   Linocell »",
+    "generated_subtitle": "Snabbt laddar din mobil",
+    "generated_bullets": [
+      "Upp till 20 W snabbladdning",
+      "Extremt liten design",
+      "Stödjer Apple Magsafe"
+    ],
+    "generated_description": "Med snabbladdning på upp till 20 W kan du ladda din mobil till 50% på bara 30 minuter. Detta är särskilt användbart när du är på språng och behöver en snabb laddning. Laddaren är också extremt liten, vilket gör den lätt att ta med på resan.",
+    "url": "https://www.kjell.com/se/produkter/mobilt/mobilladdare/usb-laddare/linocell-usb-c-laddare-med-pd-20-w-vit-p89300"
   }
 }
